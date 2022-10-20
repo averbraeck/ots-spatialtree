@@ -1,4 +1,4 @@
-package org.opentrafficsim.spatialtree.jts;
+package org.opentrafficsim.spatialtree.jsi;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
