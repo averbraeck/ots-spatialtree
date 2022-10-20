@@ -8,7 +8,6 @@ import org.djutils.exceptions.Throw;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.index.ItemVisitor;
 import org.locationtech.jts.index.hprtree.HPRtree;
-import org.locationtech.jts.index.strtree.STRtree;
 import org.opentrafficsim.base.HierarchicalType;
 import org.opentrafficsim.base.HierarchicallyTyped;
 import org.opentrafficsim.core.geometry.Bounds;
