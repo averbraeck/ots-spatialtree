@@ -38,6 +38,9 @@ public class SpatialTreeJsi implements SpatialTree
     /** the objects. */
     final Map<Integer, SpatialObject> objectMap = new LinkedHashMap<>();
 
+    /** the bounding boxes of the objects at the time of insertion. */
+    final Map<Integer, Rectangle> bboxMap = new LinkedHashMap<>();
+
     /** the reverse map of objects. */
     final Map<SpatialObject, Integer> reverseObjectMap = new LinkedHashMap<>();
 
@@ -59,6 +62,7 @@ public class SpatialTreeJsi implements SpatialTree
         Bounds bb = object.getShape().getBounds();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
         this.objectMap.put(this.counter, object);
+        this.bboxMap.put(this.counter, r);
         this.reverseObjectMap.put(object, this.counter);
         this.tree.add(r, this.counter);
         this.counter++;
@@ -66,15 +70,20 @@ public class SpatialTreeJsi implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
+    public <T extends HierarchicalType<T, I>,
+            I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
     {
-        Bounds bb = object.getShape().getBounds();
-        Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
         @SuppressWarnings("unlikely-arg-type")
-        int nr = this.reverseObjectMap.get(object);
-        this.objectMap.remove(nr, object);
-        this.reverseObjectMap.remove(nr, object);
-        return this.tree.delete(r, nr);
+        Integer nr = this.reverseObjectMap.get(object);
+        if (nr != null)
+        {
+            Rectangle r = this.bboxMap.get(nr);
+            this.objectMap.remove(nr, object);
+            this.reverseObjectMap.remove(nr, object);
+            this.bboxMap.remove(nr);
+            return this.tree.delete(r, nr);
+        }
+        return false;
     }
 
     /** {@inheritDoc} */
@@ -132,7 +141,7 @@ public class SpatialTreeJsi implements SpatialTree
                     I dso = (I) so;
                     if (type == null || dso.isOfType(type))
                     {
-                        // find the current shape of the dynamic spatial object 
+                        // find the current shape of the dynamic spatial object
                         if (so.getShape().intersects(shape))
                             returnSet.add(dso);
                         return true;
