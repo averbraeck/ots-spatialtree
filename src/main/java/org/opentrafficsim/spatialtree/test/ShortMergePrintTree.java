@@ -33,7 +33,7 @@ import nl.tudelft.simulation.dsol.SimRuntimeException;
  * @author <a href="https://tudelft.nl/staff/p.knoppers-1">Peter Knoppers</a>
  * @author <a href="https://dittlab.tudelft.nl">Wouter Schakel</a>
  */
-public class ShortMergePerformance implements EventListenerInterface
+public class ShortMergePrintTree implements EventListenerInterface
 {
     /** */
     private static final long serialVersionUID = 1L;
@@ -47,7 +47,7 @@ public class ShortMergePerformance implements EventListenerInterface
     /**
      * Create a class to compare the performance of different spatial tree implementations for a model.
      */
-    public ShortMergePerformance()
+    public ShortMergePrintTree()
     {
         this.tree = new SpatialTreeH2();
         // this.tree = new SpatialTreeJsi();
@@ -158,6 +158,6 @@ public class ShortMergePerformance implements EventListenerInterface
      */
     public static void main(final String[] args)
     {
-        new ShortMergePerformance();
+        new ShortMergePrintTree();
     }
 }
