@@ -8,11 +8,11 @@ import java.util.function.Consumer;
 
 import org.djunits.value.vdouble.scalar.Time;
 import org.djutils.exceptions.Throw;
+import org.h2.mvstore.MVStore;
 import org.h2.mvstore.db.SpatialKey;
 import org.h2.mvstore.rtree.MVRTreeMap;
 import org.h2.mvstore.rtree.MVRTreeMap.RTreeCursor;
 import org.h2.mvstore.rtree.Spatial;
-import org.h2.mvstore.rtree.SpatialDataType;
 import org.h2.mvstore.type.ObjectDataType;
 import org.opentrafficsim.base.HierarchicalType;
 import org.opentrafficsim.base.HierarchicallyTyped;
@@ -40,15 +40,18 @@ public class SpatialTreeH2 implements SpatialTree
     /** object counter. */
     private long counter = 1L; // 0 reserved for search key
 
+    /** the bounding boxes of the dynamic objects at the time of insertion. */
+    final Map<SpatialObject, SpatialKey> bboxMap = new LinkedHashMap<>();
+
     /**
      * Constructor; initialize the spatial index.
      */
     public SpatialTreeH2()
     {
-        Map<String, Object> config = new LinkedHashMap<>();
-        SpatialDataType keyType = new SpatialDataType(2); // 2 dimensions
-        ObjectDataType valueType = new ObjectDataType(); // unfortunately cannot specify exact object type
-        this.tree = new MVRTreeMap<Object>(config, keyType, valueType);
+        MVStore s = MVStore.open(null);
+        MVRTreeMap.Builder<Object> builder = new MVRTreeMap.Builder<>().dimensions(2);
+        builder.setValueType(new ObjectDataType());
+        this.tree = s.openMap("data", builder);
     }
 
     /** {@inheritDoc} */
@@ -56,20 +59,26 @@ public class SpatialTreeH2 implements SpatialTree
     public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(final I object)
     {
         Bounds bb = object.getShape().getBounds();
-        SpatialKey key = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
+        SpatialKey key = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMaxX(), (float) bb.getMinY(),
                 (float) bb.getMaxY());
         this.tree.add(key, object);
+        this.bboxMap.put(object, key);
         this.counter++;
     }
 
     /** {@inheritDoc} */
+    @SuppressWarnings("unlikely-arg-type")
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
+    public <T extends HierarchicalType<T, I>,
+            I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
     {
-        Bounds bb = object.getShape().getBounds();
-        SpatialKey key = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
-                (float) bb.getMaxY());
-        return this.tree.remove(key, object);
+        SpatialKey key = this.bboxMap.get(object);
+        if (key != null)
+        {
+            this.bboxMap.remove(object);
+            return this.tree.remove(key, object);
+        }
+        return false;
     }
 
     /** {@inheritDoc} */
@@ -80,7 +89,7 @@ public class SpatialTreeH2 implements SpatialTree
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
         Bounds bb = shape.getBounds();
-        SpatialKey searchKey = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
+        SpatialKey searchKey = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMaxX(), (float) bb.getMinY(),
                 (float) bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         RTreeCursor<Object> it = this.tree.findIntersectingKeys(searchKey);
@@ -113,7 +122,7 @@ public class SpatialTreeH2 implements SpatialTree
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
         Bounds bb = shape.getBounds();
-        SpatialKey searchKey = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
+        SpatialKey searchKey = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMaxX(), (float) bb.getMinY(),
                 (float) bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         RTreeCursor<Object> it = this.tree.findIntersectingKeys(searchKey);
