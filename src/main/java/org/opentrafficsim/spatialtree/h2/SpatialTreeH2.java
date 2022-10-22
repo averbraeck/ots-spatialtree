@@ -16,10 +16,10 @@ import org.h2.mvstore.rtree.SpatialDataType;
 import org.h2.mvstore.type.ObjectDataType;
 import org.opentrafficsim.base.HierarchicalType;
 import org.opentrafficsim.base.HierarchicallyTyped;
+import org.opentrafficsim.core.DynamicSpatialObject;
+import org.opentrafficsim.core.SpatialObject;
 import org.opentrafficsim.core.geometry.Bounds;
 import org.opentrafficsim.core.geometry.OtsShape;
-import org.opentrafficsim.spatialtree.DynamicSpatialObject;
-import org.opentrafficsim.spatialtree.SpatialObject;
 import org.opentrafficsim.spatialtree.SpatialTree;
 
 /**
@@ -53,7 +53,7 @@ public class SpatialTreeH2 implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public void put(final SpatialObject<?, ?> object)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void put(final I object)
     {
         Bounds bb = object.getShape().getBounds();
         SpatialKey key = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
@@ -64,26 +64,26 @@ public class SpatialTreeH2 implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I>,
-            C extends SpatialObject<T, I>> Set<C> find(final T type, final OtsShape shape, final Class<C> searchClass)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> Set<I> find(final T type,
+            final OtsShape shape, final Class<I> searchClass)
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
         Bounds bb = shape.getBounds();
         SpatialKey searchKey = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
                 (float) bb.getMaxY());
-        final Set<C> returnSet = new LinkedHashSet<>();
+        final Set<I> returnSet = new LinkedHashSet<>();
         RTreeCursor<Object> it = this.tree.findIntersectingKeys(searchKey);
         it.forEachRemaining(new Consumer<Spatial>()
         {
             @Override
             public void accept(final Spatial t)
             {
-                SpatialObject<?, ?> so = (SpatialObject<?, ?>) SpatialTreeH2.this.tree.get(t);
+                SpatialObject so = (SpatialObject) SpatialTreeH2.this.tree.get(t);
                 if (searchClass.isAssignableFrom(so.getClass()))
                 {
                     @SuppressWarnings("unchecked")
-                    C cso = (C) so;
+                    I cso = (I) so;
                     if (type == null || cso.isOfType(type))
                     {
                         if (so.getShape().intersects(shape))
@@ -97,27 +97,26 @@ public class SpatialTreeH2 implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I>,
-            D extends DynamicSpatialObject<T, I>> Set<D> find(final T type, final OtsShape shape, final Class<D> searchClass,
-                    final Time time)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & DynamicSpatialObject> Set<I> find(
+            final T type, final OtsShape shape, final Class<I> searchClass, final Time time)
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
         Bounds bb = shape.getBounds();
         SpatialKey searchKey = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
                 (float) bb.getMaxY());
-        final Set<D> returnSet = new LinkedHashSet<>();
+        final Set<I> returnSet = new LinkedHashSet<>();
         RTreeCursor<Object> it = this.tree.findIntersectingKeys(searchKey);
         it.forEachRemaining(new Consumer<Spatial>()
         {
             @Override
             public void accept(final Spatial t)
             {
-                SpatialObject<?, ?> so = (SpatialObject<?, ?>) SpatialTreeH2.this.tree.get(t);
+                SpatialObject so = (SpatialObject) SpatialTreeH2.this.tree.get(t);
                 if (searchClass.isAssignableFrom(so.getClass()))
                 {
                     @SuppressWarnings("unchecked")
-                    D dso = (D) so;
+                    I dso = (I) so;
                     if (type == null || dso.isOfType(type))
                     {
                         // find the current shape of the dynamic spatial object

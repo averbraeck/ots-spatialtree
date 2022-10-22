@@ -9,10 +9,10 @@ import org.djunits.value.vdouble.scalar.Time;
 import org.djutils.exceptions.Throw;
 import org.opentrafficsim.base.HierarchicalType;
 import org.opentrafficsim.base.HierarchicallyTyped;
+import org.opentrafficsim.core.DynamicSpatialObject;
+import org.opentrafficsim.core.SpatialObject;
 import org.opentrafficsim.core.geometry.Bounds;
 import org.opentrafficsim.core.geometry.OtsShape;
-import org.opentrafficsim.spatialtree.DynamicSpatialObject;
-import org.opentrafficsim.spatialtree.SpatialObject;
 import org.opentrafficsim.spatialtree.SpatialTree;
 
 import com.infomatiq.jsi.Rectangle;
@@ -36,7 +36,7 @@ public class SpatialTreeJsi implements SpatialTree
     final RTree tree = new RTree();
 
     /** the objects. */
-    final Map<Integer, SpatialObject<?, ?>> objectMap = new LinkedHashMap<>();
+    final Map<Integer, SpatialObject> objectMap = new LinkedHashMap<>();
 
     /** object counter. */
     int counter = 0;
@@ -51,7 +51,7 @@ public class SpatialTreeJsi implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public void put(final SpatialObject<?, ?> object)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void put(final I object)
     {
         Bounds bb = object.getShape().getBounds();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
@@ -62,24 +62,24 @@ public class SpatialTreeJsi implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I>,
-            C extends SpatialObject<T, I>> Set<C> find(final T type, final OtsShape shape, final Class<C> searchClass)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> Set<I> find(final T type,
+            final OtsShape shape, final Class<I> searchClass)
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
         Bounds bb = shape.getBounds();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
-        final Set<C> returnSet = new LinkedHashSet<>();
+        final Set<I> returnSet = new LinkedHashSet<>();
         this.tree.intersects(r, new TIntProcedure()
         {
             @Override
             public boolean execute(final int value)
             {
-                SpatialObject<?, ?> so = SpatialTreeJsi.this.objectMap.get(value);
+                SpatialObject so = SpatialTreeJsi.this.objectMap.get(value);
                 if (searchClass.isAssignableFrom(so.getClass()))
                 {
                     @SuppressWarnings("unchecked")
-                    C cso = (C) so;
+                    I cso = (I) so;
                     if (type == null || cso.isOfType(type))
                     {
                         if (so.getShape().intersects(shape))
@@ -95,25 +95,24 @@ public class SpatialTreeJsi implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I>,
-            D extends DynamicSpatialObject<T, I>> Set<D> find(final T type, final OtsShape shape, final Class<D> searchClass,
-                    final Time time)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & DynamicSpatialObject> Set<I> find(
+            final T type, final OtsShape shape, final Class<I> searchClass, final Time time)
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
         Bounds bb = shape.getBounds();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
-        final Set<D> returnSet = new LinkedHashSet<>();
+        final Set<I> returnSet = new LinkedHashSet<>();
         this.tree.intersects(r, new TIntProcedure()
         {
             @Override
             public boolean execute(final int value)
             {
-                SpatialObject<?, ?> so = SpatialTreeJsi.this.objectMap.get(value);
+                SpatialObject so = SpatialTreeJsi.this.objectMap.get(value);
                 if (searchClass.isAssignableFrom(so.getClass()))
                 {
                     @SuppressWarnings("unchecked")
-                    D dso = (D) so;
+                    I dso = (I) so;
                     if (type == null || dso.isOfType(type))
                     {
                         // find the current shape of the dynamic spatial object 
