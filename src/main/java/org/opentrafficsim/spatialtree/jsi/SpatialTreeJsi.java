@@ -38,6 +38,9 @@ public class SpatialTreeJsi implements SpatialTree
     /** the objects. */
     final Map<Integer, SpatialObject> objectMap = new LinkedHashMap<>();
 
+    /** the reverse map of objects. */
+    final Map<SpatialObject, Integer> reverseObjectMap = new LinkedHashMap<>();
+
     /** object counter. */
     int counter = 0;
 
@@ -51,13 +54,27 @@ public class SpatialTreeJsi implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void put(final I object)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(final I object)
     {
         Bounds bb = object.getShape().getBounds();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
         this.objectMap.put(this.counter, object);
+        this.reverseObjectMap.put(object, this.counter);
         this.tree.add(r, this.counter);
         this.counter++;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
+    {
+        Bounds bb = object.getShape().getBounds();
+        Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
+        @SuppressWarnings("unlikely-arg-type")
+        int nr = this.reverseObjectMap.get(object);
+        this.objectMap.remove(nr, object);
+        this.reverseObjectMap.remove(nr, object);
+        return this.tree.delete(r, nr);
     }
 
     /** {@inheritDoc} */

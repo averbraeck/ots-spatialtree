@@ -41,11 +41,21 @@ public class SpatialTreeJtsHprTree implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void put(final I object)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(final I object)
     {
         Bounds bb = object.getShape().getBounds();
         Envelope envelope = new Envelope(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         this.tree.insert(envelope, object);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public <T extends HierarchicalType<T, I>,
+            I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
+    {
+        Bounds bb = object.getShape().getBounds();
+        Envelope envelope = new Envelope(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
+        return this.tree.remove(envelope, object);
     }
 
     /** {@inheritDoc} */

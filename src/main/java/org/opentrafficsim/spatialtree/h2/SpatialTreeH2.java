@@ -53,13 +53,23 @@ public class SpatialTreeH2 implements SpatialTree
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void put(final I object)
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(final I object)
     {
         Bounds bb = object.getShape().getBounds();
         SpatialKey key = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
                 (float) bb.getMaxY());
         this.tree.add(key, object);
         this.counter++;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
+    {
+        Bounds bb = object.getShape().getBounds();
+        SpatialKey key = new SpatialKey(this.counter, (float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(),
+                (float) bb.getMaxY());
+        return this.tree.remove(key, object);
     }
 
     /** {@inheritDoc} */
