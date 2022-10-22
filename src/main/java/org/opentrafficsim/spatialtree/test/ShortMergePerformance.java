@@ -1,8 +1,7 @@
 package org.opentrafficsim.spatialtree.test;
 
 import java.rmi.RemoteException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Set;
 
 import javax.naming.NamingException;
 
@@ -11,14 +10,14 @@ import org.djunits.value.vdouble.scalar.Time;
 import org.djutils.event.EventInterface;
 import org.djutils.event.EventListenerInterface;
 import org.opentrafficsim.core.dsol.OtsSimulator;
-import org.opentrafficsim.core.geometry.OtsShape;
 import org.opentrafficsim.core.gtu.Gtu;
+import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.network.Link;
 import org.opentrafficsim.road.network.OtsRoadNetwork;
 import org.opentrafficsim.road.network.lane.CrossSectionLink;
 import org.opentrafficsim.road.network.lane.Lane;
 import org.opentrafficsim.spatialtree.SpatialTree;
-import org.opentrafficsim.spatialtree.h2.SpatialTreeH2;
+import org.opentrafficsim.spatialtree.rtree2.SpatialTreeRTree2;
 import org.opentrafficsim.spatialtree.test.ShortMerge.ShortMergeModel;
 
 import nl.tudelft.simulation.dsol.SimRuntimeException;
@@ -40,29 +39,33 @@ public class ShortMergePerformance implements EventListenerInterface
 
     /** the network. */
     private OtsRoadNetwork network;
-    
+
     /** the tree to use. */
     private SpatialTree tree;
-    
+
     /**
      * Create a class to compare the performance of different spatial tree implementations for a model.
      */
     public ShortMergePerformance()
     {
-        this.tree = new SpatialTreeH2(); 
+        // this.tree = new SpatialTreeH2();
+        // this.tree = new SpatialTreeJsi();
+        this.tree = new SpatialTreeRTree2();
+        // this.tree = new SpatialTreeJtsStrTree();
         try
         {
             OtsSimulator simulator = new OtsSimulator("ShortMerge");
             final ShortMergeModel otsModel = new ShortMergeModel(simulator);
-            this.network = otsModel.getNetwork();
             simulator.initialize(Time.ZERO, Duration.ZERO, Duration.instantiateSI(3600.0), otsModel);
+            this.network = otsModel.getNetwork();
             addInfra();
             subscribeGtus();
+            simulator.scheduleEventRel(Duration.instantiateSI(5.0), this, this, "search", new Object[] {});
             simulator.start();
             while (simulator.getSimulatorTime().si < 3600.0)
             {
                 Thread.sleep(1000);
-                System.out.println("T=" + simulator.getSimulatorTime() + ", #gtu=" + otsModel.getNetwork().getGTUs().size());
+                // System.out.println("T=" + simulator.getSimulatorTime() + ", #gtu=" + otsModel.getNetwork().getGTUs().size());
             }
         }
         catch (SimRuntimeException | NamingException | InterruptedException exception)
@@ -114,6 +117,28 @@ public class ShortMergePerformance implements EventListenerInterface
             this.tree.remove(gtu);
             this.tree.add(gtu);
         }
+    }
+
+    protected void search()
+    {
+        System.out.println(
+                "\nTime: " + this.network.getSimulator().getSimulatorTime() + ", #gtu=" + this.network.getGTUs().size());
+        for (Link link : this.network.getLinkMap().values())
+        {
+            CrossSectionLink csl = (CrossSectionLink) link;
+            for (Lane lane : csl.getLanes())
+            {
+                System.out.println("Lane: " + lane);
+                System.out.print("GTUs: ");
+                Set<Gtu> gtus = this.tree.find(this.network.getGtuType(GtuType.DEFAULTS.VEHICLE), lane.getShape(), Gtu.class);
+                for (Gtu gtu : gtus)
+                {
+                    System.out.print(gtu.getId() + " ");
+                }
+                System.out.println();
+            }
+        }
+        this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(1.0), this, this, "search", new Object[] {});
     }
 
     /**
