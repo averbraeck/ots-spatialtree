@@ -5,6 +5,8 @@ import java.util.Set;
 import org.djunits.value.vdouble.scalar.Time;
 import org.opentrafficsim.base.HierarchicalType;
 import org.opentrafficsim.base.HierarchicallyTyped;
+import org.opentrafficsim.core.DynamicSpatialObject;
+import org.opentrafficsim.core.SpatialObject;
 import org.opentrafficsim.core.geometry.OtsShape;
 
 /**
@@ -21,32 +23,36 @@ public interface SpatialTree
 {
     /**
      * Store a spatial object in the spatial tree.
-     * @param object SpatialObject; the object to store in the tree
+     * @param <T> the hierarchical type of the spatial object
+     * @param <I> the spatial object type we are adding
+     * @param object I; the object to store in the tree
      */
-    void put(SpatialObject<?, ?> object);
+    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void put(I object);
 
     /**
      * Return all objects with the right type (or subtype) and class (or subclass) that have an overlap with the given shape.
-     * @param <C> the spatial object class we are looking for
+     * @param <T> the hierarchical type of the spatial object
+     * @param <I> the spatial object type we are looking for
      * @param type T; the type we are looking for (subtypes also qualify)
      * @param shape OtsShape; the search area bounded by a polygon
-     * @param searchClass Class&lt;C&gt;; the class we are looking for (subclasses also qualify)
-     * @return Set&lt;C&gt;; the set of spatial objects that have an overlap with the given shape
+     * @param searchClass Class&lt;I&gt;; the class we are looking for (subclasses also qualify)
+     * @return Set&lt;I&gt;; the set of spatial objects that have an overlap with the given shape
      */
-    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I>, C extends SpatialObject<T, I>> Set<C> find(T type,
-            OtsShape shape, Class<C> searchClass);
+    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> Set<I> find(T type, OtsShape shape,
+            Class<I> searchClass);
 
     /**
      * Return all dynamic objects with the right type (or subtype) and class (or subclass) that have an overlap with the given
      * shape at the given time.
-     * @param <D> the dynamic spatial object class we are looking for
+     * @param <T> the hierarchical type of the spatial object
+     * @param <I> the dynamic spatial object type we are looking for
      * @param type T; the type we are looking for (subtypes also qualify)
      * @param shape OtsShape; the search area bounded by a polygon
-     * @param searchClass Class&lt;D&gt;; the class we are looking for (subclasses also qualify)
+     * @param searchClass Class&lt;I&gt;; the class we are looking for (subclasses also qualify)
      * @param time Time; the time for which we need to evaluate the positions of the dynamic objects
-     * @return Set&lt;D&gt;; the set of dynamic spatial objects that have an overlap with the given shape at the given time
+     * @return Set&lt;I&gt;; the set of dynamic spatial objects that have an overlap with the given shape at the given time
      */
-    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I>,
-            D extends DynamicSpatialObject<T, I>> Set<D> find(T type, OtsShape shape, Class<D> searchClass, Time time);
+    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & DynamicSpatialObject> Set<I> find(T type,
+            OtsShape shape, Class<I> searchClass, Time time);
 
 }
