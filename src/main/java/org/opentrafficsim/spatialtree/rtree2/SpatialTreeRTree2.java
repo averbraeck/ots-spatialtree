@@ -1,6 +1,8 @@
 package org.opentrafficsim.spatialtree.rtree2;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.djunits.value.vdouble.scalar.Time;
@@ -34,6 +36,9 @@ public class SpatialTreeRTree2 implements SpatialTree
     /** the tree object. */
     private RTree<SpatialObject, Geometry> tree;
 
+    /** the bounding boxes of the dynamic objects at the time of insertion. */
+    final Map<SpatialObject, Geometry> bboxMap = new LinkedHashMap<>();
+
     /**
      * Constructor; initialize the spatial index.
      */
@@ -48,17 +53,24 @@ public class SpatialTreeRTree2 implements SpatialTree
     {
         Bounds bb = object.getShape().getBounds();
         Geometry geometry = Geometries.rectangle(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
+        this.bboxMap.put(object, geometry);
         this.tree = this.tree.add(object, geometry); // note: tree is immutable; every add returns a copy (!)
     }
 
     /** {@inheritDoc} */
     @Override
-    public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
+    @SuppressWarnings("unlikely-arg-type")
+    public <T extends HierarchicalType<T, I>,
+            I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
     {
-        Bounds bb = object.getShape().getBounds();
-        Geometry geometry = Geometries.rectangle(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
-        this.tree = this.tree.delete(object, geometry); // note: tree is immutable; every delete returns a copy (!)
-        return true; // XXX: figure out if the object as in the tree
+        Geometry geometry = this.bboxMap.get(object);
+        if (geometry != null)
+        {
+            this.tree = this.tree.delete(object, geometry); // note: tree is immutable; every delete returns a copy (!)
+            this.bboxMap.remove(object);
+            return true;
+        }
+        return false;
     }
 
     /** {@inheritDoc} */
