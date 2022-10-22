@@ -1,6 +1,7 @@
 package org.opentrafficsim.spatialtree.test;
 
 import java.rmi.RemoteException;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.naming.NamingException;
@@ -17,7 +18,7 @@ import org.opentrafficsim.road.network.OtsRoadNetwork;
 import org.opentrafficsim.road.network.lane.CrossSectionLink;
 import org.opentrafficsim.road.network.lane.Lane;
 import org.opentrafficsim.spatialtree.SpatialTree;
-import org.opentrafficsim.spatialtree.rtree2.SpatialTreeRTree2;
+import org.opentrafficsim.spatialtree.h2.SpatialTreeH2;
 import org.opentrafficsim.spatialtree.test.ShortMerge.ShortMergeModel;
 
 import nl.tudelft.simulation.dsol.SimRuntimeException;
@@ -48,10 +49,11 @@ public class ShortMergePerformance implements EventListenerInterface
      */
     public ShortMergePerformance()
     {
-        // this.tree = new SpatialTreeH2();
+        this.tree = new SpatialTreeH2();
         // this.tree = new SpatialTreeJsi();
-        this.tree = new SpatialTreeRTree2();
-        // this.tree = new SpatialTreeJtsStrTree();
+        // this.tree = new SpatialTreeRTree2();
+        // this.tree = new SpatialTreeJtsStrTree(); // DOES NOT WORK: IMMUTABLE
+        // this.tree = new SpatialTreeJtsHbrTree(); // DOES NOT WORK: IMMUTABLE
         try
         {
             OtsSimulator simulator = new OtsSimulator("ShortMerge");
@@ -121,8 +123,9 @@ public class ShortMergePerformance implements EventListenerInterface
 
     protected void search()
     {
-        System.out.println(
-                "\nTime: " + this.network.getSimulator().getSimulatorTime() + ", #gtu=" + this.network.getGTUs().size());
+        int nrGtus = this.network.getGTUs().size();
+        Set<String> countSet = new LinkedHashSet<>();
+        System.out.println("\nTime: " + this.network.getSimulator().getSimulatorTime() + ", #gtu=" + nrGtus);
         for (Link link : this.network.getLinkMap().values())
         {
             CrossSectionLink csl = (CrossSectionLink) link;
@@ -134,10 +137,15 @@ public class ShortMergePerformance implements EventListenerInterface
                 for (Gtu gtu : gtus)
                 {
                     System.out.print(gtu.getId() + " ");
+                    countSet.add(gtu.getId());
                 }
                 System.out.println();
             }
         }
+        if (countSet.size() == nrGtus)
+            System.out.println("CORRECT number of Gtus in set");
+        else
+            System.err.println("INCORRECT number of Gtus in set: " + countSet.size());
         this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(1.0), this, this, "search", new Object[] {});
     }
 
