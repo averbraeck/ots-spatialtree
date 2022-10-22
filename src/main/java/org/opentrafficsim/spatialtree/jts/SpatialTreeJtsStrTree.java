@@ -43,7 +43,7 @@ public class SpatialTreeJtsStrTree implements SpatialTree
     @Override
     public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(final I object)
     {
-        Bounds bb = object.getShape().getBounds();
+        Bounds bb = object.getShape().getEnvelope();
         Envelope envelope = new Envelope(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         this.tree.insert(envelope, object);
     }
@@ -53,7 +53,7 @@ public class SpatialTreeJtsStrTree implements SpatialTree
     public <T extends HierarchicalType<T, I>,
             I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(final I object)
     {
-        Bounds bb = object.getShape().getBounds();
+        Bounds bb = object.getShape().getEnvelope();
         Envelope envelope = new Envelope(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         return this.tree.remove(envelope, object);
     }
@@ -65,7 +65,7 @@ public class SpatialTreeJtsStrTree implements SpatialTree
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
-        Bounds bb = shape.getBounds();
+        Bounds bb = shape.getEnvelope();
         Envelope searchEnv = new Envelope(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         this.tree.query(searchEnv, new ItemVisitor()
@@ -96,7 +96,7 @@ public class SpatialTreeJtsStrTree implements SpatialTree
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
-        Bounds bb = shape.getBounds();
+        Bounds bb = shape.getEnvelope();
         Envelope searchEnv = new Envelope(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         this.tree.query(searchEnv, new ItemVisitor()

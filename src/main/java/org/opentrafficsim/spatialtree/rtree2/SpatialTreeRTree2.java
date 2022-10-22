@@ -51,7 +51,7 @@ public class SpatialTreeRTree2 implements SpatialTree
     @Override
     public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(final I object)
     {
-        Bounds bb = object.getShape().getBounds();
+        Bounds bb = object.getShape().getEnvelope();
         Geometry geometry = Geometries.rectangle(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         this.bboxMap.put(object, geometry);
         this.tree = this.tree.add(object, geometry); // note: tree is immutable; every add returns a copy (!)
@@ -80,7 +80,7 @@ public class SpatialTreeRTree2 implements SpatialTree
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
-        Bounds bb = shape.getBounds();
+        Bounds bb = shape.getEnvelope();
         Rectangle rectangle = Geometries.rectangle(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         Iterable<Entry<SpatialObject, Geometry>> results = this.tree.search(rectangle);
@@ -108,7 +108,7 @@ public class SpatialTreeRTree2 implements SpatialTree
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
-        Bounds bb = shape.getBounds();
+        Bounds bb = shape.getEnvelope();
         Rectangle rectangle = Geometries.rectangle(bb.getMinX(), bb.getMinY(), bb.getMaxX(), bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         Iterable<Entry<SpatialObject, Geometry>> results = this.tree.search(rectangle);
@@ -127,6 +127,15 @@ public class SpatialTreeRTree2 implements SpatialTree
             }
         }
         return returnSet;
+    }
+
+    /**
+     * Return the embedded tree.
+     * @return RTree&lt;SpatialObject, Geometry&gt;; the embedded tree
+     */
+    public RTree<SpatialObject, Geometry> getTree()
+    {
+        return this.tree;
     }
 
 }

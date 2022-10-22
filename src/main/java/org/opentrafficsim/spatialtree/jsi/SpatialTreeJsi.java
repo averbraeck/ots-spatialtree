@@ -59,7 +59,7 @@ public class SpatialTreeJsi implements SpatialTree
     @Override
     public <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(final I object)
     {
-        Bounds bb = object.getShape().getBounds();
+        Bounds bb = object.getShape().getEnvelope();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
         this.objectMap.put(this.counter, object);
         this.bboxMap.put(this.counter, r);
@@ -93,7 +93,7 @@ public class SpatialTreeJsi implements SpatialTree
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
-        Bounds bb = shape.getBounds();
+        Bounds bb = shape.getEnvelope();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         this.tree.intersects(r, new TIntProcedure()
@@ -126,7 +126,7 @@ public class SpatialTreeJsi implements SpatialTree
     {
         Throw.whenNull(shape, "shape in find cannot be null");
         Throw.whenNull(searchClass, "searchClass in find cannot be null");
-        Bounds bb = shape.getBounds();
+        Bounds bb = shape.getEnvelope();
         Rectangle r = new Rectangle((float) bb.getMinX(), (float) bb.getMinY(), (float) bb.getMaxX(), (float) bb.getMaxY());
         final Set<I> returnSet = new LinkedHashSet<>();
         this.tree.intersects(r, new TIntProcedure()
