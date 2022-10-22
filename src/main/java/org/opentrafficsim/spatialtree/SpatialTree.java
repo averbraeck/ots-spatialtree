@@ -27,7 +27,16 @@ public interface SpatialTree
      * @param <I> the spatial object type we are adding
      * @param object I; the object to store in the tree
      */
-    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void put(I object);
+    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(I object);
+
+    /**
+     * Remove a spatial object from the spatial tree.
+     * @param <T> the hierarchical type of the spatial object
+     * @param <I> the spatial object type we are adding
+     * @param object I; the object to remove from the tree
+     * @return boolean; whether the object was present in the tree or not
+     */
+    <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(I object);
 
     /**
      * Return all objects with the right type (or subtype) and class (or subclass) that have an overlap with the given shape.
