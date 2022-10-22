@@ -145,7 +145,10 @@ public class ShortMergePerformance implements EventListenerInterface
         if (countSet.size() == nrGtus)
             System.out.println("CORRECT number of Gtus in set");
         else
+        {
             System.err.println("INCORRECT number of Gtus in set: " + countSet.size());
+            System.exit(-1);
+        }
         this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(1.0), this, this, "search", new Object[] {});
     }
 
