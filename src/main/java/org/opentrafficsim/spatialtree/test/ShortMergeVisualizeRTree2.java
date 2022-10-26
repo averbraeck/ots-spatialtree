@@ -138,9 +138,10 @@ public class ShortMergeVisualizeRTree2 implements EventListenerInterface
 
     protected void search()
     {
+        Time time = this.network.getSimulator().getSimulatorAbsTime();
         int nrGtus = this.network.getGTUs().size();
         Set<String> countSet = new LinkedHashSet<>();
-        System.out.println("\nTime: " + this.network.getSimulator().getSimulatorTime() + ", #gtu=" + nrGtus);
+        System.out.println("\nTime: " + time + ", #gtu=" + nrGtus);
         for (Link link : this.network.getLinkMap().values())
         {
             CrossSectionLink csl = (CrossSectionLink) link;
@@ -148,7 +149,8 @@ public class ShortMergeVisualizeRTree2 implements EventListenerInterface
             {
                 System.out.println("Lane: " + lane);
                 System.out.print("GTUs: ");
-                Set<Gtu> gtus = this.tree.find(this.network.getGtuType(GtuType.DEFAULTS.VEHICLE), lane.getShape(), Gtu.class);
+                Set<Gtu> gtus =
+                        this.tree.find(this.network.getGtuType(GtuType.DEFAULTS.VEHICLE), lane.getShape(), Gtu.class, time);
                 for (Gtu gtu : gtus)
                 {
                     System.out.print(gtu.getId() + " ");
@@ -157,19 +159,22 @@ public class ShortMergeVisualizeRTree2 implements EventListenerInterface
                 System.out.println();
             }
         }
+        boolean err = false;
         if (countSet.size() == nrGtus)
             System.out.println("CORRECT number of Gtus in set");
         else
         {
-            System.err.println("INCORRECT number of Gtus in set: " + countSet.size());
-            System.exit(-1);
+            System.err.println("INCORRECT number of Gtus in set: " + countSet.size() + ", expected: " + nrGtus);
+            this.network.getSimulator().stop();
+            err = true;
         }
 
-        final BufferedImage image = this.tree.getTree().visualize(1900, 1000).createImage();
+        final BufferedImage image = this.tree.getTree().visualize(1900, 300).createImage();
         this.imagePanel.setImage(image);
         this.frame.validate();
 
-        this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(0.1), this, this, "search", new Object[] {});
+        if (!err)
+            this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(0.1), this, this, "search", new Object[] {});
     }
 
     /**

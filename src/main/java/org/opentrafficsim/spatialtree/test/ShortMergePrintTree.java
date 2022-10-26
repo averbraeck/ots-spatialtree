@@ -123,9 +123,10 @@ public class ShortMergePrintTree implements EventListenerInterface
 
     protected void search()
     {
+        Time time = this.network.getSimulator().getSimulatorAbsTime();
         int nrGtus = this.network.getGTUs().size();
         Set<String> countSet = new LinkedHashSet<>();
-        System.out.println("\nTime: " + this.network.getSimulator().getSimulatorTime() + ", #gtu=" + nrGtus);
+        System.out.println("\nTime: " + time + ", #gtu=" + nrGtus);
         for (Link link : this.network.getLinkMap().values())
         {
             CrossSectionLink csl = (CrossSectionLink) link;
@@ -133,7 +134,8 @@ public class ShortMergePrintTree implements EventListenerInterface
             {
                 System.out.println("Lane: " + lane);
                 System.out.print("GTUs: ");
-                Set<Gtu> gtus = this.tree.find(this.network.getGtuType(GtuType.DEFAULTS.VEHICLE), lane.getShape(), Gtu.class);
+                Set<Gtu> gtus =
+                        this.tree.find(this.network.getGtuType(GtuType.DEFAULTS.VEHICLE), lane.getShape(), Gtu.class, time);
                 for (Gtu gtu : gtus)
                 {
                     System.out.print(gtu.getId() + " ");
@@ -146,7 +148,7 @@ public class ShortMergePrintTree implements EventListenerInterface
             System.out.println("CORRECT number of Gtus in set");
         else
         {
-            System.err.println("INCORRECT number of Gtus in set: " + countSet.size());
+            System.err.println("INCORRECT number of Gtus in set: " + countSet.size() + ", expected: " + nrGtus);
             System.exit(-1);
         }
         this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(1.0), this, this, "search", new Object[] {});
