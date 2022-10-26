@@ -142,7 +142,7 @@ public class SpatialTreeJsi implements SpatialTree
                     if (type == null || dso.isOfType(type))
                     {
                         // find the current shape of the dynamic spatial object
-                        if (so.getShape().intersects(shape))
+                        if (shape.intersects(dso.getShape(time)))
                             returnSet.add(dso);
                         return true;
                     }

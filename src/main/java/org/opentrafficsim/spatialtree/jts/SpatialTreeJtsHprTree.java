@@ -111,7 +111,7 @@ public class SpatialTreeJtsHprTree implements SpatialTree
                     I dso = (I) so;
                     if (type == null || dso.isOfType(type))
                     {
-                        if (so.getShape().intersects(shape))
+                        if (shape.intersects(dso.getShape(time)))
                             returnSet.add(dso);
                     }
                 }
