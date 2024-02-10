@@ -1,7 +1,6 @@
 package org.opentrafficsim.spatialtree.test;
 
 import java.awt.Dimension;
-import java.io.Serializable;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import org.opentrafficsim.base.parameters.ParameterException;
 import org.opentrafficsim.base.parameters.ParameterSet;
 import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.core.animation.gtu.colorer.GtuColorer;
+import org.opentrafficsim.core.definitions.DefaultsNl;
 import org.opentrafficsim.core.distributions.ConstantGenerator;
 import org.opentrafficsim.core.distributions.Distribution;
 import org.opentrafficsim.core.distributions.Distribution.FrequencyAndObject;
@@ -41,9 +41,9 @@ import org.opentrafficsim.core.dsol.OtsSimulatorInterface;
 import org.opentrafficsim.core.gtu.GtuException;
 import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.idgenerator.IdGenerator;
+import org.opentrafficsim.core.network.Link;
 import org.opentrafficsim.core.network.NetworkException;
-import org.opentrafficsim.core.network.OtsLink;
-import org.opentrafficsim.core.network.OtsNode;
+import org.opentrafficsim.core.network.Node;
 import org.opentrafficsim.core.network.route.ProbabilisticRouteGenerator;
 import org.opentrafficsim.core.network.route.Route;
 import org.opentrafficsim.core.parameters.ParameterFactory;
@@ -55,8 +55,8 @@ import org.opentrafficsim.road.gtu.generator.GeneratorPositions;
 import org.opentrafficsim.road.gtu.generator.LaneBasedGtuGenerator;
 import org.opentrafficsim.road.gtu.generator.LaneBasedGtuGenerator.RoomChecker;
 import org.opentrafficsim.road.gtu.generator.TtcRoomChecker;
-import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedTemplateGtuType;
-import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedTemplateGtuTypeDistribution;
+import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedGtuTemplate;
+import org.opentrafficsim.road.gtu.generator.characteristics.LaneBasedGtuTemplateDistribution;
 import org.opentrafficsim.road.gtu.lane.tactical.LaneBasedTacticalPlannerFactory;
 import org.opentrafficsim.road.gtu.lane.tactical.following.AbstractIdm;
 import org.opentrafficsim.road.gtu.lane.tactical.following.CarFollowingModelFactory;
@@ -81,13 +81,14 @@ import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.MandatoryIncentive;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Synchronization;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.Tailgating;
 import org.opentrafficsim.road.gtu.lane.tactical.util.lmrs.VoluntaryIncentive;
-import org.opentrafficsim.road.gtu.strategical.route.LaneBasedStrategicalRoutePlannerFactory;
-import org.opentrafficsim.road.network.OtsRoadNetwork;
+import org.opentrafficsim.road.gtu.strategical.LaneBasedStrategicalRoutePlannerFactory;
+import org.opentrafficsim.road.network.RoadNetwork;
 import org.opentrafficsim.road.network.factory.xml.parser.XmlNetworkLaneParser;
 import org.opentrafficsim.road.network.lane.CrossSectionLink;
 import org.opentrafficsim.road.network.lane.Lane;
 import org.opentrafficsim.road.network.lane.LanePosition;
 import org.opentrafficsim.road.network.lane.object.SpeedSign;
+import org.opentrafficsim.spatialtree.test.ShortMerge.ShortMergeModel;
 import org.opentrafficsim.swing.gui.AnimationToggles;
 import org.opentrafficsim.swing.gui.OtsAnimationPanel;
 import org.opentrafficsim.swing.gui.OtsSimulationApplication;
@@ -101,14 +102,14 @@ import nl.tudelft.simulation.language.DSOLException;
 
 /**
  * <p>
- * Copyright (c) 2013-2022 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
+ * Copyright (c) 2013-2023 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
  * BSD-style license. See <a href="https://opentrafficsim.org/docs/license.html">OpenTrafficSim License</a>.
- * <p>
+ * </p>
  * @author <a href="https://github.com/averbraeck">Alexander Verbraeck</a>
  * @author <a href="https://tudelft.nl/staff/p.knoppers-1">Peter Knoppers</a>
  * @author <a href="https://dittlab.tudelft.nl">Wouter Schakel</a>
  */
-public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeModel>
+public class ShortMerge extends OtsSimulationApplication<ShortMergeModel>
 {
     /** */
     private static final long serialVersionUID = 20170407L;
@@ -143,7 +144,7 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
     /**
      * Create a ShortMerge Swing application.
      * @param title String; the title of the Frame
-     * @param panel OTSAnimationPanel; the tabbed panel to display
+     * @param panel OtsAnimationPanel; the tabbed panel to display
      * @param model ShortMergeModel; the model
      * @throws OtsDrawingException on animation error
      */
@@ -157,8 +158,8 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
     protected void setAnimationToggles()
     {
         AnimationToggles.setTextAnimationTogglesFull(getAnimationPanel());
-        getAnimationPanel().getAnimationPanel().toggleClass(OtsLink.class);
-        getAnimationPanel().getAnimationPanel().toggleClass(OtsNode.class);
+        getAnimationPanel().getAnimationPanel().toggleClass(Link.class);
+        getAnimationPanel().getAnimationPanel().toggleClass(Node.class);
         getAnimationPanel().getAnimationPanel().showClass(SpeedSign.class);
     }
 
@@ -183,7 +184,7 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
             final ShortMergeModel otsModel = new ShortMergeModel(simulator);
             simulator.initialize(Time.ZERO, Duration.ZERO, Duration.instantiateSI(3600.0), otsModel);
             OtsAnimationPanel animationPanel = new OtsAnimationPanel(otsModel.getNetwork().getExtent(), new Dimension(800, 600),
-                    simulator, otsModel, new LmrsSwitchableColorer(), otsModel.getNetwork());
+                    simulator, otsModel, new LmrsSwitchableColorer(DefaultsNl.GTU_TYPE_COLORS.toMap()), otsModel.getNetwork());
             ShortMerge app = new ShortMerge("ShortMerge", animationPanel, otsModel);
             app.setExitOnClose(exitOnClose);
             animationPanel.enableSimulationControlButtons();
@@ -197,10 +198,10 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
 
     /**
      * <p>
-     * Copyright (c) 2013-2022 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved.
+     * Copyright (c) 2013-2023 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved.
      * <br>
      * BSD-style license. See <a href="https://opentrafficsim.org/docs/license.html">OpenTrafficSim License</a>.
-     * <p>
+     * </p>
      * @author <a href="https://github.com/averbraeck">Alexander Verbraeck</a>
      * @author <a href="https://tudelft.nl/staff/p.knoppers-1">Peter Knoppers</a>
      * @author <a href="https://dittlab.tudelft.nl">Wouter Schakel</a>
@@ -211,10 +212,10 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
         private static final long serialVersionUID = 20170407L;
 
         /** The network. */
-        private OtsRoadNetwork network;
+        private RoadNetwork network;
 
         /**
-         * @param simulator OTSSimulatorInterface; the simulator
+         * @param simulator OtsSimulatorInterface; the simulator
          */
         public ShortMergeModel(final OtsSimulatorInterface simulator)
         {
@@ -222,9 +223,9 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
         }
 
         /**
-         * @param network OTSRoadNetwork; set network.
+         * @param network RoadNetwork; set network.
          */
-        public void setNetwork(final OtsRoadNetwork network)
+        public void setNetwork(final RoadNetwork network)
         {
             this.network = network;
         }
@@ -236,7 +237,7 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
             try
             {
                 URL xmlURL = URLResource.getResource("/resources/lmrs/" + NETWORK + ".xml");
-                this.network = new OtsRoadNetwork("ShortMerge", true, getSimulator());
+                this.network = new RoadNetwork("ShortMerge", getSimulator());
                 XmlNetworkLaneParser.build(xmlURL, this.network, false);
                 addGenerator();
 
@@ -249,7 +250,7 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
 
         /** {@inheritDoc} */
         @Override
-        public OtsRoadNetwork getNetwork()
+        public RoadNetwork getNetwork()
         {
             return this.network;
         }
@@ -304,8 +305,8 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
                     new DefaultLmrsPerceptionFactory(), SYNCHRONIZATION, COOPERATION, GapAcceptance.INFORMED, Tailgating.NONE,
                     mandatoryIncentives, voluntaryIncentives, accelerationIncentives);
 
-            GtuType car = new GtuType("car", this.network.getGtuType(GtuType.DEFAULTS.CAR));
-            GtuType truck = new GtuType("truck", this.network.getGtuType(GtuType.DEFAULTS.TRUCK));
+            GtuType car = DefaultsNl.CAR;
+            GtuType truck = DefaultsNl.TRUCK;
             Route routeAE = this.network.getShortestRouteBetween(car, this.network.getNode("A"), this.network.getNode("E"));
             Route routeAG = !NETWORK.equals("shortWeave") ? null
                     : this.network.getShortestRouteBetween(car, this.network.getNode("A"), this.network.getNode("G"));
@@ -350,39 +351,35 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
             LaneBasedStrategicalRoutePlannerFactory strategicalFactory =
                     new LaneBasedStrategicalRoutePlannerFactory(tacticalFactory, bcFactory);
             // vehicle templates, with routes
-            LaneBasedTemplateGtuType carA =
-                    new LaneBasedTemplateGtuType(new GtuType("car", this.network.getGtuType(GtuType.DEFAULTS.CAR)),
-                            new ConstantGenerator<>(Length.instantiateSI(4.0)),
+            LaneBasedGtuTemplate carA =
+                    new LaneBasedGtuTemplate(car, new ConstantGenerator<>(Length.instantiateSI(4.0)),
                             new ConstantGenerator<>(Length.instantiateSI(2.0)), speedCar, strategicalFactory, routeGeneratorA);
-            LaneBasedTemplateGtuType carF =
-                    new LaneBasedTemplateGtuType(new GtuType("car", this.network.getGtuType(GtuType.DEFAULTS.CAR)),
-                            new ConstantGenerator<>(Length.instantiateSI(4.0)),
+            LaneBasedGtuTemplate carF =
+                    new LaneBasedGtuTemplate(car, new ConstantGenerator<>(Length.instantiateSI(4.0)),
                             new ConstantGenerator<>(Length.instantiateSI(2.0)), speedCar, strategicalFactory, routeGeneratorF);
-            LaneBasedTemplateGtuType truckA = new LaneBasedTemplateGtuType(
-                    new GtuType("truck", this.network.getGtuType(GtuType.DEFAULTS.TRUCK)),
+            LaneBasedGtuTemplate truckA = new LaneBasedGtuTemplate(truck,
                     new ConstantGenerator<>(Length.instantiateSI(15.0)), new ConstantGenerator<>(Length.instantiateSI(2.5)),
                     speedTruck, strategicalFactory, routeGeneratorA);
-            LaneBasedTemplateGtuType truckF = new LaneBasedTemplateGtuType(
-                    new GtuType("truck", this.network.getGtuType(GtuType.DEFAULTS.TRUCK)),
+            LaneBasedGtuTemplate truckF = new LaneBasedGtuTemplate(truck,
                     new ConstantGenerator<>(Length.instantiateSI(15.0)), new ConstantGenerator<>(Length.instantiateSI(2.5)),
                     speedTruck, strategicalFactory, routeGeneratorF);
             //
-            Distribution<LaneBasedTemplateGtuType> gtuTypeAllCarA = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuTypeAllCarA = new Distribution<>(streams.get("gtuClass"));
             gtuTypeAllCarA.add(new FrequencyAndObject<>(1.0, carA));
 
-            Distribution<LaneBasedTemplateGtuType> gtuType1LaneF = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuType1LaneF = new Distribution<>(streams.get("gtuClass"));
             gtuType1LaneF.add(new FrequencyAndObject<>(1.0 - 2 * TRUCK_FRACTION, carF));
             gtuType1LaneF.add(new FrequencyAndObject<>(2 * TRUCK_FRACTION, truckF));
 
-            Distribution<LaneBasedTemplateGtuType> gtuType2ndLaneA = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuType2ndLaneA = new Distribution<>(streams.get("gtuClass"));
             gtuType2ndLaneA.add(new FrequencyAndObject<>(1.0 - 2 * TRUCK_FRACTION, carA));
             gtuType2ndLaneA.add(new FrequencyAndObject<>(2 * TRUCK_FRACTION, truckA));
 
-            Distribution<LaneBasedTemplateGtuType> gtuType3rdLaneA = new Distribution<>(streams.get("gtuClass"));
+            Distribution<LaneBasedGtuTemplate> gtuType3rdLaneA = new Distribution<>(streams.get("gtuClass"));
             gtuType3rdLaneA.add(new FrequencyAndObject<>(1.0 - 3 * TRUCK_FRACTION, carA));
             gtuType3rdLaneA.add(new FrequencyAndObject<>(3 * TRUCK_FRACTION, truckA));
 
-            GtuColorer colorer = new LmrsSwitchableColorer();
+            GtuColorer colorer = new LmrsSwitchableColorer(DefaultsNl.GTU_TYPE_COLORS.toMap());
             makeGenerator(getLane(linkA, "FORWARD1"), speedA, "gen1", idGenerator, gtuTypeAllCarA, headwaysA1, colorer,
                     roomChecker, bcFactory, tacticalFactory, SIMTIME, streams.get("gtuClass"));
             if (NETWORK.equals("shortWeave"))
@@ -401,7 +398,8 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
                     roomChecker, bcFactory, tacticalFactory, SIMTIME, streams.get("gtuClass"));
 
             new SpeedSign("sign1", getLane(linkA, "FORWARD1"), Length.instantiateSI(10), this.getSimulator(),
-                    new Speed(130.0, SpeedUnit.KM_PER_HOUR));
+                    new Speed(130.0, SpeedUnit.KM_PER_HOUR), DefaultsNl.VEHICLE, Duration.ZERO,
+                    new Duration(24, DurationUnit.HOUR));
 
         }
 
@@ -433,39 +431,33 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
          * @throws ProbabilityException in case of an illegal probability distribution
          * @throws GtuException in case the GTU is inconsistent
          * @throws ParameterException in case a parameter for the perception is missing
+         * @throws NetworkException if the object could not be added to the network
          */
         private void makeGenerator(final Lane lane, final Speed generationSpeed, final String id, final IdGenerator idGenerator,
-                final Distribution<LaneBasedTemplateGtuType> distribution, final Generator<Duration> headwayGenerator,
+                final Distribution<LaneBasedGtuTemplate> distribution, final Generator<Duration> headwayGenerator,
                 final GtuColorer gtuColorer, final RoomChecker roomChecker, final ParameterFactory bcFactory,
                 final LaneBasedTacticalPlannerFactory<?> tacticalFactory, final Time simulationTime,
-                final StreamInterface stream) throws SimRuntimeException, ProbabilityException, GtuException, ParameterException
+                final StreamInterface stream) throws SimRuntimeException, ProbabilityException, GtuException, ParameterException, NetworkException
         {
 
             Set<LanePosition> initialLongitudinalPositions = new LinkedHashSet<>();
             // TODO DIR_MINUS
             initialLongitudinalPositions.add(new LanePosition(lane, new Length(5.0, LengthUnit.SI)));
-            LaneBasedTemplateGtuTypeDistribution characteristicsGenerator =
-                    new LaneBasedTemplateGtuTypeDistribution(distribution);
+            LaneBasedGtuTemplateDistribution characteristicsGenerator =
+                    new LaneBasedGtuTemplateDistribution(distribution);
             new LaneBasedGtuGenerator(id, headwayGenerator, characteristicsGenerator,
                     GeneratorPositions.create(initialLongitudinalPositions, stream), this.network, getSimulator(), roomChecker,
                     idGenerator);
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public Serializable getSourceId()
-        {
-            return "ShortMergeModel";
         }
 
     }
 
     /**
      * <p>
-     * Copyright (c) 2013-2022 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved.
+     * Copyright (c) 2013-2023 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved.
      * <br>
      * BSD-style license. See <a href="https://opentrafficsim.org/docs/license.html">OpenTrafficSim License</a>.
-     * <p>
+     * </p>
      * @author <a href="https://github.com/averbraeck">Alexander Verbraeck</a>
      * @author <a href="https://tudelft.nl/staff/p.knoppers-1">Peter Knoppers</a>
      * @author <a href="https://dittlab.tudelft.nl">Wouter Schakel</a>
@@ -479,7 +471,7 @@ public class ShortMerge extends OtsSimulationApplication<ShortMerge.ShortMergeMo
         private final Frequency demand;
 
         /**
-         * @param simulator OTSSimulatorInterface; the simulator
+         * @param simulator OtsSimulatorInterface; the simulator
          * @param demand Frequency; demand
          */
         HeadwayGenerator(final OtsSimulatorInterface simulator, final Frequency demand)

@@ -1,6 +1,5 @@
 package org.opentrafficsim.spatialtree.test;
 
-import java.awt.BorderLayout;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.rmi.RemoteException;
@@ -13,16 +12,17 @@ import javax.swing.JPanel;
 
 import org.djunits.value.vdouble.scalar.Duration;
 import org.djunits.value.vdouble.scalar.Time;
-import org.djutils.event.EventInterface;
-import org.djutils.event.EventListenerInterface;
+import org.djutils.event.Event;
+import org.djutils.event.EventListener;
+import org.opentrafficsim.core.definitions.DefaultsNl;
 import org.opentrafficsim.core.dsol.OtsSimulator;
 import org.opentrafficsim.core.gtu.Gtu;
-import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.network.Link;
-import org.opentrafficsim.road.network.OtsRoadNetwork;
+import org.opentrafficsim.road.network.RoadNetwork;
 import org.opentrafficsim.road.network.lane.CrossSectionLink;
 import org.opentrafficsim.road.network.lane.Lane;
-import org.opentrafficsim.spatialtree.rtree2.SpatialTreeRTree2;
+import org.opentrafficsim.spatialtree.SpatialTree;
+import org.opentrafficsim.spatialtree.h2.SpatialTreeH2;
 import org.opentrafficsim.spatialtree.test.ShortMerge.ShortMergeModel;
 
 import nl.tudelft.simulation.dsol.SimRuntimeException;
@@ -30,23 +30,23 @@ import nl.tudelft.simulation.dsol.SimRuntimeException;
 /**
  * ShortMergePerformance.java.
  * <p>
- * Copyright (c) 2022-2022 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
+ * Copyright (c) 2022-2023 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
  * BSD-style license. See <a href="https://opentrafficsim.org/docs/license.html">OpenTrafficSim License</a>.
  * </p>
  * @author <a href="https://github.com/averbraeck">Alexander Verbraeck</a>
  * @author <a href="https://tudelft.nl/staff/p.knoppers-1">Peter Knoppers</a>
  * @author <a href="https://dittlab.tudelft.nl">Wouter Schakel</a>
  */
-public class ShortMergeVisualizeRTree2 implements EventListenerInterface
+public class ShortMergeVisualizeRTree2 implements EventListener
 {
     /** */
     private static final long serialVersionUID = 1L;
 
     /** the network. */
-    private OtsRoadNetwork network;
+    private RoadNetwork network;
 
     /** the tree to use. */
-    private SpatialTreeRTree2 tree;
+    private SpatialTree tree;
 
     /** frame. */
     private JFrame frame;
@@ -59,30 +59,33 @@ public class ShortMergeVisualizeRTree2 implements EventListenerInterface
      */
     public ShortMergeVisualizeRTree2()
     {
-        this.frame = new JFrame("RTree2 ShortMerge");
-        this.frame.setSize(1920, 1000);
-        this.frame.setVisible(true);
-        this.frame.getContentPane().setLayout(new BorderLayout());
-        this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.imagePanel = new ImagePanel();
-        this.frame.getContentPane().add(this.imagePanel, BorderLayout.CENTER);
+        // this.frame = new JFrame("RTree2 ShortMerge");
+        // this.frame.setSize(1920, 1000);
+        // this.frame.setVisible(true);
+        // this.frame.getContentPane().setLayout(new BorderLayout());
+        // this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // this.imagePanel = new ImagePanel();
+        // this.frame.getContentPane().add(this.imagePanel, BorderLayout.CENTER);
 
-        this.tree = new SpatialTreeRTree2();
+        this.tree = new SpatialTreeH2();
         try
         {
             OtsSimulator simulator = new OtsSimulator("ShortMerge");
             final ShortMergeModel otsModel = new ShortMergeModel(simulator);
-            simulator.initialize(Time.ZERO, Duration.ZERO, Duration.instantiateSI(3600.0), otsModel);
+            simulator.initialize(Time.ZERO, Duration.ZERO, Duration.instantiateSI(600.0), otsModel);
             this.network = otsModel.getNetwork();
             addInfra();
+            // TODO: initial gtus
             subscribeGtus();
             simulator.scheduleEventRel(Duration.instantiateSI(5.0), this, this, "search", new Object[] {});
+            long t = System.currentTimeMillis();
             simulator.start();
-            while (simulator.getSimulatorTime().si < 3600.0)
+            while (simulator.getSimulatorTime().si < 600.0)
             {
-                Thread.sleep(1000);
+                Thread.sleep(100);
                 // System.out.println("T=" + simulator.getSimulatorTime() + ", #gtu=" + otsModel.getNetwork().getGTUs().size());
             }
+            System.out.println(System.currentTimeMillis() - t);
         }
         catch (SimRuntimeException | NamingException | InterruptedException exception)
         {
@@ -100,26 +103,26 @@ public class ShortMergeVisualizeRTree2 implements EventListenerInterface
                 this.tree.add(lane);
             }
         }
-        System.out.println(this.tree.getTree().asString());
+        // System.out.println(this.tree.getTree().asString());
     }
 
     private void subscribeGtus()
     {
-        this.network.addListener(this, OtsRoadNetwork.GTU_ADD_EVENT);
-        this.network.addListener(this, OtsRoadNetwork.GTU_REMOVE_EVENT);
+        this.network.addListener(this, RoadNetwork.GTU_ADD_EVENT);
+        this.network.addListener(this, RoadNetwork.GTU_REMOVE_EVENT);
     }
 
     /** {@inheritDoc} */
     @Override
-    public void notify(final EventInterface event) throws RemoteException
+    public void notify(final Event event) throws RemoteException
     {
-        if (event.getType().equals(OtsRoadNetwork.GTU_ADD_EVENT))
+        if (event.getType().equals(RoadNetwork.GTU_ADD_EVENT))
         {
             String gtuId = event.getContent().toString();
             Gtu gtu = this.network.getGTU(gtuId);
             gtu.addListener(this, Gtu.MOVE_EVENT);
         }
-        else if (event.getType().equals(OtsRoadNetwork.GTU_REMOVE_EVENT))
+        else if (event.getType().equals(RoadNetwork.GTU_REMOVE_EVENT))
         {
             String gtuId = event.getContent().toString();
             Gtu gtu = this.network.getGTU(gtuId);
@@ -141,40 +144,39 @@ public class ShortMergeVisualizeRTree2 implements EventListenerInterface
         Time time = this.network.getSimulator().getSimulatorAbsTime();
         int nrGtus = this.network.getGTUs().size();
         Set<String> countSet = new LinkedHashSet<>();
-        System.out.println("\nTime: " + time + ", #gtu=" + nrGtus);
+        // System.out.println("\nTime: " + time + ", #gtu=" + nrGtus);
         for (Link link : this.network.getLinkMap().values())
         {
             CrossSectionLink csl = (CrossSectionLink) link;
             for (Lane lane : csl.getLanes())
             {
-                System.out.println("Lane: " + lane);
-                System.out.print("GTUs: ");
-                Set<Gtu> gtus =
-                        this.tree.find(this.network.getGtuType(GtuType.DEFAULTS.VEHICLE), lane.getShape(), Gtu.class, time);
+                // System.out.println("Lane: " + lane);
+                // System.out.print("GTUs: ");
+                Set<Gtu> gtus = this.tree.find(DefaultsNl.VEHICLE, lane.getShape(), Gtu.class, time);
                 for (Gtu gtu : gtus)
                 {
-                    System.out.print(gtu.getId() + " ");
+                    // System.out.print(gtu.getId() + " ");
                     countSet.add(gtu.getId());
                 }
-                System.out.println();
+                // System.out.println();
             }
         }
         boolean err = false;
-        if (countSet.size() == nrGtus)
-            System.out.println("CORRECT number of Gtus in set");
-        else
-        {
-            System.err.println("INCORRECT number of Gtus in set: " + countSet.size() + ", expected: " + nrGtus);
-            this.network.getSimulator().stop();
-            err = true;
-        }
+        // if (countSet.size() == nrGtus)
+        // System.out.println("CORRECT number of Gtus in set");
+        // else
+        // {
+        // System.err.println("INCORRECT number of Gtus in set: " + countSet.size() + ", expected: " + nrGtus);
+        // this.network.getSimulator().stop();
+        // err = true;
+        // }
 
-        final BufferedImage image = this.tree.getTree().visualize(1900, 300).createImage();
-        this.imagePanel.setImage(image);
-        this.frame.validate();
+        // final BufferedImage image = this.tree.getTree().visualize(1900, 300).createImage();
+        // this.imagePanel.setImage(image);
+        // this.frame.validate();
 
         if (!err)
-            this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(0.1), this, this, "search", new Object[] {});
+            this.network.getSimulator().scheduleEventRel(Duration.instantiateSI(0.01), this, this, "search", new Object[] {});
     }
 
     /**

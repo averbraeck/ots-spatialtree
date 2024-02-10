@@ -9,6 +9,7 @@ import org.djunits.value.vdouble.scalar.Length;
 import org.opentrafficsim.base.parameters.ParameterException;
 import org.opentrafficsim.base.parameters.ParameterTypes;
 import org.opentrafficsim.base.parameters.Parameters;
+import org.opentrafficsim.core.definitions.DefaultsNl;
 import org.opentrafficsim.core.gtu.GtuType;
 import org.opentrafficsim.core.parameters.ParameterFactory;
 
@@ -20,7 +21,7 @@ import nl.tudelft.simulation.dsol.model.inputparameters.InputParameterMap;
 /**
  * InputParameterHelper.java.
  * <p>
- * Copyright (c) 2013-2022 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
+ * Copyright (c) 2013-2023 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
  * BSD-style license. See <a href="https://opentrafficsim.org/docs/license.html">OpenTrafficSim License</a>.
  * </p>
  * @author <a href="https://github.com/averbraeck" target="_blank">Alexander Verbraeck</a>
@@ -46,11 +47,11 @@ public final class InputParameterHelper implements ParameterFactory
     {
         try
         {
-            if (gtuType.isOfType(GtuType.DEFAULTS.CAR))
+            if (gtuType.isOfType(DefaultsNl.CAR))
             {
                 getParametersCar(this.rootMap).setAllIn(parameters);
             }
-            else if (gtuType.isOfType(GtuType.DEFAULTS.TRUCK))
+            else if (gtuType.isOfType(DefaultsNl.TRUCK))
             {
                 getParametersTruck(this.rootMap).setAllIn(parameters);
             }
