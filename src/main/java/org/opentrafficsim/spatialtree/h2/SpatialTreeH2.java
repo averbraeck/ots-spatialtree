@@ -25,7 +25,7 @@ import org.opentrafficsim.spatialtree.SpatialTree;
 /**
  * SpatialTreeH2 based on MVRTreeMap.
  * <p>
- * Copyright (c) 2022-2022 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
+ * Copyright (c) 2022-2023 Delft University of Technology, PO Box 5, 2600 AA, Delft, the Netherlands. All rights reserved. <br>
  * BSD-style license. See <a href="https://opentrafficsim.org/docs/license.html">OpenTrafficSim License</a>.
  * </p>
  * @author <a href="https://github.com/averbraeck">Alexander Verbraeck</a>
@@ -139,7 +139,9 @@ public class SpatialTreeH2 implements SpatialTree
                     if (type == null || dso.isOfType(type))
                     {
                         // find the current shape of the dynamic spatial object
-                        if (shape.intersects(dso.getShape(time)))
+//                        if (shape.intersects(dso.getShape(time)))
+//                            returnSet.add(dso);
+                        if (dso.getShape(time).intersects(shape))
                             returnSet.add(dso);
                     }
                 }
