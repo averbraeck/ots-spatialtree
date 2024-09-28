@@ -25,7 +25,7 @@ public interface SpatialTree
      * Store a spatial object in the spatial tree.
      * @param <T> the hierarchical type of the spatial object
      * @param <I> the spatial object type we are adding
-     * @param object I; the object to store in the tree
+     * @param object the object to store in the tree
      */
     <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> void add(I object);
 
@@ -33,8 +33,8 @@ public interface SpatialTree
      * Remove a spatial object from the spatial tree.
      * @param <T> the hierarchical type of the spatial object
      * @param <I> the spatial object type we are adding
-     * @param object I; the object to remove from the tree
-     * @return boolean; whether the object was present in the tree or not
+     * @param object the object to remove from the tree
+     * @return whether the object was present in the tree or not
      */
     <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> boolean remove(I object);
 
@@ -42,10 +42,10 @@ public interface SpatialTree
      * Return all objects with the right type (or subtype) and class (or subclass) that have an overlap with the given shape.
      * @param <T> the hierarchical type of the spatial object
      * @param <I> the spatial object type we are looking for
-     * @param type T; the type we are looking for (subtypes also qualify)
-     * @param shape OtsShape; the search area bounded by a polygon
-     * @param searchClass Class&lt;I&gt;; the class we are looking for (subclasses also qualify)
-     * @return Set&lt;I&gt;; the set of spatial objects that have an overlap with the given shape
+     * @param type the type we are looking for (subtypes also qualify)
+     * @param shape the search area bounded by a polygon
+     * @param searchClass the class we are looking for (subclasses also qualify)
+     * @return the set of spatial objects that have an overlap with the given shape
      */
     <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & SpatialObject> Set<I> find(T type, OtsShape shape,
             Class<I> searchClass);
@@ -55,11 +55,11 @@ public interface SpatialTree
      * shape at the given time.
      * @param <T> the hierarchical type of the spatial object
      * @param <I> the dynamic spatial object type we are looking for
-     * @param type T; the type we are looking for (subtypes also qualify)
-     * @param shape OtsShape; the search area bounded by a polygon
-     * @param searchClass Class&lt;I&gt;; the class we are looking for (subclasses also qualify)
-     * @param time Time; the time for which we need to evaluate the positions of the dynamic objects
-     * @return Set&lt;I&gt;; the set of dynamic spatial objects that have an overlap with the given shape at the given time
+     * @param type the type we are looking for (subtypes also qualify)
+     * @param shape the search area bounded by a polygon
+     * @param searchClass the class we are looking for (subclasses also qualify)
+     * @param time the time for which we need to evaluate the positions of the dynamic objects
+     * @return the set of dynamic spatial objects that have an overlap with the given shape at the given time
      */
     <T extends HierarchicalType<T, I>, I extends HierarchicallyTyped<T, I> & DynamicSpatialObject> Set<I> find(T type,
             OtsShape shape, Class<I> searchClass, Time time);

@@ -131,7 +131,7 @@ public class SpatialTreeRTree2 implements SpatialTree
 
     /**
      * Return the embedded tree.
-     * @return RTree&lt;SpatialObject, Geometry&gt;; the embedded tree
+     * @return the embedded tree
      */
     public RTree<SpatialObject, Geometry> getTree()
     {

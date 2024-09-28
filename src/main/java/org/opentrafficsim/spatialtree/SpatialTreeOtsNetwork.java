@@ -20,8 +20,8 @@ public class SpatialTreeOtsNetwork extends RoadNetwork
 
     /**
      * Construction of an empty network.
-     * @param id String; the network id.
-     * @param simulator OTSSimulatorInterface; the DSOL simulator engine
+     * @param id the network id.
+     * @param simulator the DSOL simulator engine
      */
     public SpatialTreeOtsNetwork(final String id, final OtsSimulatorInterface simulator)
     {

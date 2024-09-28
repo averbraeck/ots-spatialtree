@@ -199,7 +199,7 @@ public class ShortMergeVisualizeRTree2 implements EventListener
 
         /**
          * Set a new image.
-         * @param image BufferedImage; the image
+         * @param image the image
          */
         void setImage(final BufferedImage image)
         {

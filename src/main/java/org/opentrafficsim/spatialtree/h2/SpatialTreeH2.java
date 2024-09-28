@@ -139,8 +139,8 @@ public class SpatialTreeH2 implements SpatialTree
                     if (type == null || dso.isOfType(type))
                     {
                         // find the current shape of the dynamic spatial object
-//                        if (shape.intersects(dso.getShape(time)))
-//                            returnSet.add(dso);
+                        // if (shape.intersects(dso.getShape(time)))
+                        // returnSet.add(dso);
                         if (dso.getShape(time).intersects(shape))
                             returnSet.add(dso);
                     }
